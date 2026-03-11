@@ -1,0 +1,47 @@
+# simultaneo. — Traduttore Simultaneo Vero
+
+Traduzione simultanea reale: la voce tradotta esce mentre l’altro sta ancora parlando.
+
+## Architettura
+
+```
+Browser (Web Speech API)
+  → frase finale rilevata
+  → POST /translate-tts  (testo)
+      → Groq LLaMA 3.3  (~200ms)
+      → Edge TTS         (~300ms)
+  → audio in coda → riproduzione immediata
+```
+
+Il STT è interamente nel browser (gratuito, zero latenza).
+Il backend fa solo traduzione + sintesi vocale.
+Latenza totale per frase: ~500-800ms.
+
+## Tre modalità
+
+- **Dialogo** — due bottoni push-to-talk, uno per persona (A→B, B→A)
+- **Simultaneo** — ascolto continuo, traduzione automatica frase per frase
+- **Ascolto** — come Simultaneo ma pensato per ascoltare audio esterno (TV, discorsi)
+
+## Setup
+
+```bash
+pip install -r requirements.txt
+export GROQ_API_KEY="gsk_..."
+uvicorn app:app --reload --port 8000
+```
+
+## Deploy su Render (HTTPS per iPhone)
+
+1. Crea repo GitHub con: `app.py`, `requirements.txt`, `static/index.html`
+1. New Web Service su render.com
+1. Build: `pip install -r requirements.txt`
+1. Start: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+1. Env var: `GROQ_API_KEY`
+1. Deploy → URL HTTPS → funziona su Safari iPhone
+
+## Note
+
+- **Safari iOS**: Web Speech API richiede HTTPS → usa Render
+- **Chrome Android**: funziona anche in locale con HTTP
+- Groq free tier: ~14.400 traduzioni/giorno, più che sufficiente
